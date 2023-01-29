@@ -43,7 +43,7 @@ fn main() {
         }
         Action::Show {  } => {
             for (i, task) in load_task() {
-                print!("{}| {}", i, task.display())
+                print!("{}| {}", i, task)
             }
         }
     }

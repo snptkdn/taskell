@@ -10,12 +10,16 @@ impl Task {
             point
         }
     }
+}
 
-    pub fn display(self) -> String {
+use std::fmt;
+
+impl fmt::Display for Task {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(point) = self.point {
-            format!("{}|{}", self.title, point)
+            write!(f, "{}|{}", self.title, point)
         } else {
-            format!("{}", self.title)
+            write!(f, "{}", self.title)
         }
     }
 }
