@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use anyhow::Result;
 
 mod task;
 use task::*;
@@ -32,20 +33,22 @@ enum Action {
     Show {}
 }
 
-fn main() {
+fn main() -> Result<()> {
     let cli = AppArg::parse();
     match cli.action {
         Action::Add { title, point } => {
             let task = Task::new(title, point);
             write_file(vec!(task)).unwrap();
+            Ok(())
         },
         Action::Done { id } => {
             unimplemented!()
         }
         Action::Show {  } => {
-            for (i, task) in load_task() {
+            for (i, task) in load_task()? {
                 print!("{}| {}", i, task)
             }
+            Ok(())
         }
     }
 }

@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::f32::consts::E;
+use anyhow::Result;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -18,7 +19,6 @@ impl Task {
             point
         }
     }
-
 }
 
 use std::fmt;
@@ -33,12 +33,18 @@ impl fmt::Display for Task {
     }
 }
 
-pub fn load_task() -> Vec<(usize, Task)> {
-    unimplemented!()
+pub fn load_task() -> Result<HashMap<usize, Task>> {
+    let mut tasks_file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open("task.json")?;
+    let reader = BufReader::new(tasks_file);
+    let tasks: HashMap<usize, Task> = serde_json::from_reader(reader)?;
+    Ok(tasks)
 }
 
 pub fn write_file(tasks: Vec<Task>) -> std::io::Result<()> {
-    let mut file = OpenOptions::new()
+    let file = OpenOptions::new()
         .read(true)
         .write(true)
         .open("task.json")?;
