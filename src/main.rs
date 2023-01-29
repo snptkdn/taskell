@@ -38,15 +38,28 @@ fn main() -> Result<()> {
     match cli.action {
         Action::Add { title, point } => {
             let task = Task::new(title, point);
-            write_file(vec!(task)).unwrap();
+            let mut tasks = load_task()?;
+            tasks.insert
+            (
+                if let Some(x) = tasks.keys().max() {
+                    x+1
+                } else {
+                    1
+                }, 
+                task
+            );
+            write_file(tasks).unwrap();
             Ok(())
         },
         Action::Done { id } => {
-            unimplemented!()
+            let tasks = load_task()?;
+            let tasks = delete_task(tasks, id)?;
+            write_file(tasks)?;
+            Ok(())
         }
         Action::Show {  } => {
             for (i, task) in load_task()? {
-                print!("{}| {}", i, task)
+                print!("{}| {}\n", i, task)
             }
             Ok(())
         }

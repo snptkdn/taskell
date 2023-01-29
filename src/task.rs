@@ -33,29 +33,41 @@ impl fmt::Display for Task {
     }
 }
 
-pub fn load_task() -> Result<HashMap<usize, Task>> {
-    let mut tasks_file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open("task.json")?;
-    let reader = BufReader::new(tasks_file);
-    let tasks: HashMap<usize, Task> = serde_json::from_reader(reader)?;
+pub fn delete_task(mut tasks: HashMap<usize, Task>, id: usize) -> Result<HashMap<usize, Task>> {
+    println!("before delete {:?}", &tasks);
+    tasks.remove(&id);
+    println!("after delete {:?}", &tasks);
     Ok(tasks)
 }
 
-pub fn write_file(tasks: Vec<Task>) -> std::io::Result<()> {
-    let file = OpenOptions::new()
+pub fn load_task() -> Result<HashMap<usize, Task>> {
+    let tasks_file = OpenOptions::new()
         .read(true)
         .write(true)
+        .create(true)
+        .open("task.json")?;
+    let reader = BufReader::new(tasks_file);
+    let tasks: HashMap<usize, Task> = 
+        match serde_json::from_reader(reader) {
+            Ok(tasks) => tasks,
+            Err(e) => HashMap::new()
+        };
+    Ok(tasks)
+}
+
+pub fn write_file(tasks: HashMap<usize, Task>) -> std::io::Result<()> {
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(true)
         .open("task.json")?;
 
-    let mut tasks_map = HashMap::new();
-    for (i, task) in tasks.iter().enumerate() {
-        tasks_map.insert(i+1, task);
-    }
-
-    let memos_text = serde_json::to_string(&tasks_map)?;
-    write!(&file, "{}", memos_text)?;
+    let memos_text = serde_json::to_string(&tasks)?;
+    println!("{:?}", tasks);
+    //write!(&file, "{}", memos_text)?;
+    file.write_all(memos_text.as_bytes())?;
+    file.flush()?;
 
     Ok(())
 }
