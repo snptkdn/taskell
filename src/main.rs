@@ -27,7 +27,9 @@ enum Action {
 
     Done {
         id: usize,
-    }
+    },
+
+    Show {}
 }
 
 fn main() {
@@ -37,6 +39,12 @@ fn main() {
             let task = Task::new(title, point);
         },
         Action::Done { id } => {
+            unimplemented!()
+        }
+        Action::Show {  } => {
+            for (i, task) in load_task() {
+                print!("{}| {}", i, task.display())
+            }
         }
     }
 }
