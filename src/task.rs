@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::f32::consts::E;
 use anyhow::Result;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::io::BufReader;
+use chrono::{Local, DateTime};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Task {
@@ -26,18 +26,55 @@ use std::fmt;
 impl fmt::Display for Task {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(point) = self.point {
-            write!(f, "{}|{}", self.title, point)
+            write!(f, "{:<50}|{:>5}", self.title, point)
         } else {
-            write!(f, "{}", self.title)
+            write!(f, "{:<50}|{:>5}", self.title, "-")
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DoneTask {
+    point: Option<usize>,
+    date: DateTime<Local>,
+
+}
+
+impl DoneTask {
+    pub fn new(point: Option<usize>, date: DateTime<Local>) -> Self {
+        Self {
+            point,
+            date
         }
     }
 }
 
 pub fn delete_task(mut tasks: HashMap<usize, Task>, id: usize) -> Result<HashMap<usize, Task>> {
     println!("before delete {:?}", &tasks);
-    tasks.remove(&id);
-    println!("after delete {:?}", &tasks);
-    Ok(tasks)
+    let task = tasks.remove(&id);
+    if let Some(task) = task {
+        archive_task(task)?;
+        Ok(tasks)
+    } else {
+        Ok(tasks)
+    }
+}
+
+fn archive_task(task: Task) -> Result<()> {
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .append(true)
+        .open("archives.json")?;
+
+    println!("archive");
+    let local_datetime: DateTime<Local> = Local::now();
+    let done_task = DoneTask::new(task.point, local_datetime);
+    let done_task = serde_json::to_string(&done_task)?;
+    println!("{:?}", done_task);
+    file.write_all(done_task.as_bytes())?;
+    Ok(())
 }
 
 pub fn load_task() -> Result<HashMap<usize, Task>> {
