@@ -26,9 +26,9 @@ use std::fmt;
 impl fmt::Display for Task {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(point) = self.point {
-            write!(f, "{}|{}", self.title, point)
+            write!(f, "{:<50}|{:>5}", self.title, point)
         } else {
-            write!(f, "{}", self.title)
+            write!(f, "{:<50}|{:>5}", self.title, "-")
         }
     }
 }

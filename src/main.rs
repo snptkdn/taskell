@@ -19,7 +19,6 @@ struct AppArg {
 #[derive(Subcommand)]
 enum Action {
     Add {
-        #[clap(short, long)]
         title: String,
 
         #[clap(short, long)]
@@ -58,8 +57,9 @@ fn main() -> Result<()> {
             Ok(())
         }
         Action::Show {  } => {
+            println!("|{:^3}|{:^50}|{:^5}|", "id", "title", "point");
             for (i, task) in load_task()? {
-                print!("{}| {}\n", i, task)
+                println!("|{:>3}|{}|", i, task)
             }
             Ok(())
         }
