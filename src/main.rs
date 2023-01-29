@@ -37,6 +37,7 @@ fn main() {
     match cli.action {
         Action::Add { title, point } => {
             let task = Task::new(title, point);
+            write_file(vec!(task)).unwrap();
         },
         Action::Done { id } => {
             unimplemented!()
