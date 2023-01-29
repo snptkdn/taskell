@@ -1,29 +1,42 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
+
+mod task;
+use task::*;
 
 #[derive(Parser)]
 #[clap(
-    name = "My Application",
-    author = "Author's name",
-    version = "v1.0.0",
-    about = "Application short description."
+    name = "Taskell",
+    author = "snptkdn",
+    version = "v0.0.1",
+    about = "Taskell is task management tool."
 )]
 struct AppArg {
-    #[clap(short, long)]
-    name: Option<String>,
+    #[clap(subcommand)]
+    action: Action
+}
 
-    #[clap(short = 'c', long = "count")]
-    count: i32,
+#[derive(Subcommand)]
+enum Action {
+    Add {
+        #[clap(short, long)]
+        title: String,
 
-    message: String,
+        #[clap(short, long)]
+        point: Option<usize>,
+    },
+
+    Done {
+        id: usize,
+    }
 }
 
 fn main() {
-    let arg: AppArg = AppArg::parse();
-    for _ in 0..arg.count {
-        println!(
-            "{}: {}",
-            arg.name.clone().unwrap_or(String::from("Alice")),
-            arg.message
-        );
+    let cli = AppArg::parse();
+    match cli.action {
+        Action::Add { title, point } => {
+            let task = Task::new(title, point);
+        },
+        Action::Done { id } => {
+        }
     }
 }
