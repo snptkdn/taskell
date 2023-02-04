@@ -5,6 +5,8 @@ use clap::{Parser, Subcommand};
 use anyhow::{Result, anyhow};
 use diesel::QueryDsl;
 use crate::diesel::{RunQueryDsl, ExpressionMethods};
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 
 mod task;
 mod utils;
@@ -31,6 +33,12 @@ struct AppArg {
 #[derive(Subcommand)]
 enum Action {
     SignUp {
+        #[clap(short, long)]
+        name: String,
+        #[clap(short, long)]
+        pass: String,
+    },
+    Login {
         #[clap(short, long)]
         name: String,
         #[clap(short, long)]
@@ -71,6 +79,25 @@ fn main() -> Result<()> {
             diesel::insert_into(users_schema::dsl::users)
                 .values(new_user)
                 .execute(&connection)?;
+
+            Ok(())
+        },
+        Action::Login { name, pass } => {
+            let connection = establish_connection();
+            let current_user = &users_schema::dsl::users
+                .filter(users_schema::dsl::name.eq(&name))
+                .filter(users_schema::dsl::encrypted_pass.eq(hash(pass)))
+                .load::<User>(&connection)?[0];
+
+            let mut file = OpenOptions::new()
+                .read(true)
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open("user_info.json")?;
+
+            file.write_all(current_user.id.to_string().as_bytes())?;
+            file.flush()?;
 
             Ok(())
         }
