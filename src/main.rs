@@ -5,17 +5,17 @@ use clap::{Parser, Subcommand};
 use anyhow::{Result, anyhow};
 use diesel::QueryDsl;
 use crate::diesel::{RunQueryDsl, ExpressionMethods};
-use std::fs::OpenOptions;
-use std::io::prelude::*;
+use mac_address::get_mac_address;
 
 mod task;
 mod utils;
 mod models;
 mod schema;
-use models::{NewUser, User};
+use models::{NewUser, User, NewLoginInfo};
 use task::*;
 use utils::{establish_connection, hash};
 use schema::users as users_schema;
+use schema::login_info as login_info_schema;
 
 
 #[derive(Parser)]
@@ -95,15 +95,21 @@ fn main() -> Result<()> {
                 return Err(anyhow!("mismatched name or password."));
             };
 
-            let mut file = OpenOptions::new()
-                .read(true)
-                .write(true)
-                .create(true)
-                .truncate(true)
-                .open("user_info.json")?;
+            let mac_address = match get_mac_address()? {
+                Some(mac_address) => mac_address.to_string(),
+                None => {
+                    return Err(anyhow!("can't get mac address."));
+                },
+            };
 
-            file.write_all(current_user.id.to_string().as_bytes())?;
-            file.flush()?;
+            let new_login_info = NewLoginInfo {
+                mac_address,
+                user_id: Some(current_user.id as i32),
+            };
+
+            diesel::insert_into(login_info_schema::dsl::login_info)
+                .values(new_login_info)
+                .execute(&connection)?;
 
             Ok(())
         }
