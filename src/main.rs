@@ -1,8 +1,20 @@
+#[macro_use]
+extern crate diesel;
+
 use clap::{Parser, Subcommand};
-use anyhow::Result;
+use anyhow::{Result, anyhow};
+use diesel::QueryDsl;
+use crate::diesel::{RunQueryDsl, ExpressionMethods};
 
 mod task;
+mod utils;
+mod models;
+mod schema;
+use models::{NewUser, User};
 use task::*;
+use utils::{establish_connection, hash};
+use schema::users as users_schema;
+
 
 #[derive(Parser)]
 #[clap(
@@ -18,6 +30,12 @@ struct AppArg {
 
 #[derive(Subcommand)]
 enum Action {
+    SignUp {
+        #[clap(short, long)]
+        name: String,
+        #[clap(short, long)]
+        pass: String,
+    },
     Add {
         title: String,
 
@@ -35,6 +53,27 @@ enum Action {
 fn main() -> Result<()> {
     let cli = AppArg::parse();
     match cli.action {
+        Action::SignUp { name, pass } => {
+            let connection = establish_connection();
+            let new_user = NewUser {
+                name,
+                encrypted_pass: hash(pass)
+            };
+
+            let same_name_user = users_schema::dsl::users
+                .filter(users_schema::name.eq(&new_user.name))
+                .load::<User>(&connection)?;
+
+            if same_name_user.len() > 0 {
+                return Err(anyhow!("this name is already exists."))
+            }
+
+            diesel::insert_into(users_schema::dsl::users)
+                .values(new_user)
+                .execute(&connection)?;
+
+            Ok(())
+        }
         Action::Add { title, point } => {
             let task = Task::new(title, point);
             let mut tasks = load_task()?;
@@ -49,7 +88,7 @@ fn main() -> Result<()> {
             );
             write_file(tasks).unwrap();
             Ok(())
-        },
+        }, 
         Action::Done { id } => {
             let tasks = load_task()?;
             let tasks = delete_task(tasks, id)?;

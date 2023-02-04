@@ -87,7 +87,7 @@ pub fn load_task() -> Result<HashMap<usize, Task>> {
     let tasks: HashMap<usize, Task> = 
         match serde_json::from_reader(reader) {
             Ok(tasks) => tasks,
-            Err(e) => HashMap::new()
+            Err(_) => HashMap::new()
         };
     Ok(tasks)
 }
