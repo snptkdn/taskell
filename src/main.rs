@@ -87,7 +87,13 @@ fn main() -> Result<()> {
             let current_user = &users_schema::dsl::users
                 .filter(users_schema::dsl::name.eq(&name))
                 .filter(users_schema::dsl::encrypted_pass.eq(hash(pass)))
-                .load::<User>(&connection)?[0];
+                .load::<User>(&connection)?;
+
+            let current_user = if current_user.len() > 0 {
+                &current_user[0]
+            } else {
+                return Err(anyhow!("mismatched name or password."));
+            };
 
             let mut file = OpenOptions::new()
                 .read(true)
