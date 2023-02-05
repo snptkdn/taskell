@@ -129,9 +129,6 @@ fn main() -> Result<()> {
             Ok(())
         }, 
         Action::Done { id } => {
-            let tasks = load_task()?;
-            let tasks = delete_task(tasks, id)?;
-            write_file(tasks)?;
             Ok(())
         }
         Action::Show {  } => {
@@ -146,14 +143,8 @@ fn main() -> Result<()> {
                 .filter(tasks_schema::dsl::user_id.eq(&current_user_id))
                 .load::<RawTask>(&connection)?;
 
-            for task in tasks {
-                println!("{:?}", task);
-            }
+            task::Tasks::from_raw_tasks(&tasks).show_formatted();
 
-            //println!("|{:^3}|{:^50}|{:^5}|", "id", "title", "point");
-            //for (i, task) in load_task()? {
-            //    println!("|{:>3}|{}|", i, task)
-            //}
             Ok(())
         }
     }
