@@ -54,3 +54,10 @@ pub struct RawTask {
     pub user_id: Option<i32>,
     pub title: String,
 }
+
+#[derive(Debug, Queryable)]
+pub struct DoneTask {
+    pub id: u64,
+    pub point: Option<i32>,
+    pub done_date: NaiveDateTime,
+}

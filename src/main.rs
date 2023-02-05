@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate diesel;
 
+use chrono::Datelike;
+use chrono::Duration;
+use chrono::TimeZone;
 use clap::{Parser, Subcommand};
 use anyhow::{Result, anyhow};
 use diesel::QueryDsl;
@@ -13,7 +16,7 @@ mod task;
 mod utils;
 mod models;
 mod schema;
-use models::{NewUser, User, NewLoginInfo, NewTask, RawTask};
+use models::{NewUser, User, NewLoginInfo, NewTask, RawTask, DoneTask};
 use utils::{establish_connection, hash, get_mac_address_string};
 use schema::users as users_schema;
 use schema::login_info as login_info_schema;
@@ -57,8 +60,8 @@ enum Action {
     Done {
         id: usize,
     },
-
-    Show {}
+    Show {},
+    Today {},
 }
 
 fn main() -> Result<()> {
@@ -150,6 +153,7 @@ fn main() -> Result<()> {
                 .filter(tasks_schema::dsl::id.eq(id as u64))
                 .execute(&connection)?;
 
+
             Ok(())
         }
         Action::Show {  } => {
@@ -167,6 +171,34 @@ fn main() -> Result<()> {
             task::Tasks::from_raw_tasks(&tasks).show_formatted();
 
             Ok(())
-        }
+        },
+        Action::Today {  } => {
+            let connection = establish_connection();
+
+            let today = Local::now().naive_local();
+            let tomorrow = today + Duration::days(1);
+            let today = Local.with_ymd_and_hms(today.year(), today.month(), today.day(), 0, 0, 0).unwrap().naive_local();
+            let tomorrow = Local.with_ymd_and_hms(tomorrow.year(), tomorrow.month(), tomorrow.day(), 0, 0, 0).unwrap().naive_local();
+
+            let done_today_tasks = done_tasks_schema::dsl::done_tasks
+                .filter(done_tasks_schema::done_date.gt(today))
+                .filter(done_tasks_schema::done_date.lt(tomorrow))
+                .load::<DoneTask>(&connection)?;
+
+            let today_points = done_today_tasks
+                .iter()
+                .fold(0,
+                    |acc, task|
+                    if let Some(points) = task.point {
+                        acc + points
+                    } else {
+                        acc
+                    }
+                );
+
+            println!("today point is {}", today_points);
+
+            Ok(())
+        },
     }
 }
