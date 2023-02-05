@@ -9,6 +9,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    tasks (id) {
+        id -> Unsigned<Bigint>,
+        point -> Nullable<Integer>,
+        user_id -> Nullable<Integer>,
+        title -> Varchar,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Unsigned<Bigint>,
         name -> Varchar,
@@ -18,5 +27,6 @@ diesel::table! {
 
 diesel::allow_tables_to_appear_in_same_query!(
     login_info,
+    tasks,
     users,
 );

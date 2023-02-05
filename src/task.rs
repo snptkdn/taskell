@@ -12,15 +12,6 @@ pub struct Task {
     point: Option<usize>
 }
 
-impl Task {
-    pub fn new(title: String, point: Option<usize>) -> Self {
-        Task {
-            title, 
-            point
-        }
-    }
-}
-
 use std::fmt;
 
 impl fmt::Display for Task {

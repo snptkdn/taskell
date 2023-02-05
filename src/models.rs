@@ -1,5 +1,6 @@
 use crate::schema::users;
 use crate::schema::login_info;
+use crate::schema::tasks;
 
 #[derive(Insertable)]
 #[table_name = "users"]
@@ -15,9 +16,24 @@ pub struct NewLoginInfo {
     pub user_id: Option<i32>,
 }
 
+#[derive(Insertable)]
+#[table_name = "tasks"]
+pub struct NewTask {
+    pub title: String,
+    pub point: Option<i32>,
+    pub user_id: Option<i32>,
+}
+
 #[derive(Debug, Queryable)]
 pub struct User {
     pub id: u64,
     pub name: String,
     pub encrypted_pass: String,
+}
+
+#[derive(Debug, Queryable)]
+pub struct LoginInfo {
+    pub id: u64,
+    pub mac_address: String,
+    pub user_id: Option<i32>,
 }

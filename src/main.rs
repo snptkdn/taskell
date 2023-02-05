@@ -4,6 +4,7 @@ extern crate diesel;
 use clap::{Parser, Subcommand};
 use anyhow::{Result, anyhow};
 use diesel::QueryDsl;
+use models::LoginInfo;
 use crate::diesel::{RunQueryDsl, ExpressionMethods};
 use mac_address::get_mac_address;
 
@@ -11,11 +12,12 @@ mod task;
 mod utils;
 mod models;
 mod schema;
-use models::{NewUser, User, NewLoginInfo};
+use models::{NewUser, User, NewLoginInfo, NewTask};
 use task::*;
 use utils::{establish_connection, hash};
 use schema::users as users_schema;
 use schema::login_info as login_info_schema;
+use schema::tasks as tasks_schema;
 
 
 #[derive(Parser)]
@@ -48,7 +50,7 @@ enum Action {
         title: String,
 
         #[clap(short, long)]
-        point: Option<usize>,
+        point: Option<i32>,
     },
 
     Done {
@@ -114,18 +116,27 @@ fn main() -> Result<()> {
             Ok(())
         }
         Action::Add { title, point } => {
-            let task = Task::new(title, point);
-            let mut tasks = load_task()?;
-            tasks.insert
-            (
-                if let Some(x) = tasks.keys().max() {
-                    x+1
-                } else {
-                    1
-                }, 
-                task
-            );
-            write_file(tasks).unwrap();
+            let connection = establish_connection();
+            let mac_address = match get_mac_address()? {
+                Some(mac_address) => mac_address.to_string(),
+                None => {
+                    return Err(anyhow!("can't get mac address."));
+                },
+            };
+            let current_user_id = login_info_schema::dsl::login_info
+                .filter(login_info_schema::dsl::mac_address.eq(&mac_address))
+                .first::<LoginInfo>(&connection)?.user_id;
+
+            let new_task = NewTask {
+                title,
+                user_id: current_user_id,
+                point,
+            };
+
+            diesel::insert_into(tasks_schema::dsl::tasks)
+                .values(new_task)
+                .execute(&connection)?;
+
             Ok(())
         }, 
         Action::Done { id } => {
