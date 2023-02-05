@@ -6,7 +6,6 @@ use anyhow::{Result, anyhow};
 use diesel::QueryDsl;
 use models::LoginInfo;
 use crate::diesel::{RunQueryDsl, ExpressionMethods};
-use mac_address::get_mac_address;
 
 mod task;
 mod utils;
@@ -14,7 +13,7 @@ mod models;
 mod schema;
 use models::{NewUser, User, NewLoginInfo, NewTask};
 use task::*;
-use utils::{establish_connection, hash};
+use utils::{establish_connection, hash, get_mac_address_string};
 use schema::users as users_schema;
 use schema::login_info as login_info_schema;
 use schema::tasks as tasks_schema;
@@ -97,12 +96,7 @@ fn main() -> Result<()> {
                 return Err(anyhow!("mismatched name or password."));
             };
 
-            let mac_address = match get_mac_address()? {
-                Some(mac_address) => mac_address.to_string(),
-                None => {
-                    return Err(anyhow!("can't get mac address."));
-                },
-            };
+            let mac_address = get_mac_address_string()?;
 
             let new_login_info = NewLoginInfo {
                 mac_address,
@@ -117,12 +111,7 @@ fn main() -> Result<()> {
         }
         Action::Add { title, point } => {
             let connection = establish_connection();
-            let mac_address = match get_mac_address()? {
-                Some(mac_address) => mac_address.to_string(),
-                None => {
-                    return Err(anyhow!("can't get mac address."));
-                },
-            };
+            let mac_address = get_mac_address_string()?;
             let current_user_id = login_info_schema::dsl::login_info
                 .filter(login_info_schema::dsl::mac_address.eq(&mac_address))
                 .first::<LoginInfo>(&connection)?.user_id;
@@ -146,6 +135,7 @@ fn main() -> Result<()> {
             Ok(())
         }
         Action::Show {  } => {
+
             println!("|{:^3}|{:^50}|{:^5}|", "id", "title", "point");
             for (i, task) in load_task()? {
                 println!("|{:>3}|{}|", i, task)
