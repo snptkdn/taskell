@@ -11,7 +11,7 @@ mod task;
 mod utils;
 mod models;
 mod schema;
-use models::{NewUser, User, NewLoginInfo, NewTask};
+use models::{NewUser, User, NewLoginInfo, NewTask, RawTask};
 use task::*;
 use utils::{establish_connection, hash, get_mac_address_string};
 use schema::users as users_schema;
@@ -135,11 +135,25 @@ fn main() -> Result<()> {
             Ok(())
         }
         Action::Show {  } => {
+            let connection = establish_connection();
+            let mac_address = get_mac_address_string()?;
+            let current_user_id = login_info_schema::dsl::login_info
+                .filter(login_info_schema::dsl::mac_address.eq(&mac_address))
+                .first::<LoginInfo>(&connection)?
+                .user_id;
 
-            println!("|{:^3}|{:^50}|{:^5}|", "id", "title", "point");
-            for (i, task) in load_task()? {
-                println!("|{:>3}|{}|", i, task)
+            let tasks = tasks_schema::dsl::tasks
+                .filter(tasks_schema::dsl::user_id.eq(&current_user_id))
+                .load::<RawTask>(&connection)?;
+
+            for task in tasks {
+                println!("{:?}", task);
             }
+
+            //println!("|{:^3}|{:^50}|{:^5}|", "id", "title", "point");
+            //for (i, task) in load_task()? {
+            //    println!("|{:>3}|{}|", i, task)
+            //}
             Ok(())
         }
     }

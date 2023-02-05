@@ -37,3 +37,11 @@ pub struct LoginInfo {
     pub mac_address: String,
     pub user_id: Option<i32>,
 }
+
+#[derive(Debug, Queryable)]
+pub struct RawTask {
+    pub id: u64,
+    pub point: Option<i32>,
+    pub user_id: Option<i32>,
+    pub title: String,
+}
