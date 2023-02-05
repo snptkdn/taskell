@@ -1,6 +1,8 @@
 use crate::schema::users;
 use crate::schema::login_info;
 use crate::schema::tasks;
+use crate::schema::done_tasks;
+use chrono::NaiveDateTime;
 
 #[derive(Insertable)]
 #[table_name = "users"]
@@ -22,6 +24,13 @@ pub struct NewTask {
     pub title: String,
     pub point: Option<i32>,
     pub user_id: Option<i32>,
+}
+
+#[derive(Insertable)]
+#[table_name = "done_tasks"]
+pub struct NewDoneTask {
+    pub point: Option<i32>,
+    pub done_date: NaiveDateTime,
 }
 
 #[derive(Debug, Queryable)]

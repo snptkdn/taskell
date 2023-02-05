@@ -1,6 +1,14 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    done_tasks (id) {
+        id -> Unsigned<Bigint>,
+        point -> Nullable<Integer>,
+        done_date -> Datetime,
+    }
+}
+
+diesel::table! {
     login_info (id) {
         id -> Unsigned<Bigint>,
         mac_address -> Varchar,
@@ -26,6 +34,7 @@ diesel::table! {
 }
 
 diesel::allow_tables_to_appear_in_same_query!(
+    done_tasks,
     login_info,
     tasks,
     users,

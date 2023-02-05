@@ -4,7 +4,9 @@ extern crate diesel;
 use clap::{Parser, Subcommand};
 use anyhow::{Result, anyhow};
 use diesel::QueryDsl;
+use chrono::{NaiveDateTime, Local};
 use models::LoginInfo;
+use models::NewDoneTask;
 use crate::diesel::{RunQueryDsl, ExpressionMethods};
 
 mod task;
@@ -17,6 +19,7 @@ use utils::{establish_connection, hash, get_mac_address_string};
 use schema::users as users_schema;
 use schema::login_info as login_info_schema;
 use schema::tasks as tasks_schema;
+use schema::done_tasks as done_tasks_schema;
 
 
 #[derive(Parser)]
@@ -129,6 +132,25 @@ fn main() -> Result<()> {
             Ok(())
         }, 
         Action::Done { id } => {
+            let connection = establish_connection();
+
+            let done_task = tasks_schema::dsl::tasks
+                .filter(tasks_schema::dsl::id.eq(id as u64))
+                .first::<RawTask>(&connection)?;
+
+            let new_done_task = NewDoneTask {
+                point: done_task.point,
+                done_date: Local::now().naive_local(),
+            };
+
+            diesel::insert_into(done_tasks_schema::dsl::done_tasks)
+                .values(new_done_task)
+                .execute(&connection)?;
+
+            diesel::delete(tasks_schema::dsl::tasks)
+                .filter(tasks_schema::dsl::id.eq(id as u64))
+                .execute(&connection)?;
+
             Ok(())
         }
         Action::Show {  } => {
