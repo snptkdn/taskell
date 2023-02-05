@@ -1,1 +1,5 @@
 /target
+Cargo.lock
+archives.json
+task.json
+.env
